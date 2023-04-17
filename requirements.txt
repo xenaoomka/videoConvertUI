@@ -1,0 +1,5 @@
+flask==2.2.3
+setuptools==67.3.3
+Flask-SQLAlchemy==3.0.3
+sqlalchemy
+flask_bootstrap
