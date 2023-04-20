@@ -1,58 +1,55 @@
+import datetime
 from flask import Flask, render_template, request, redirect, send_from_directory
 from flask_bootstrap import Bootstrap
-from flask_paginate import Pagination, get_page_parameter
 import sqlite3
 import os
+import pytz
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 
-DB_NAME = '/Users/oomkaxena/Desktop/content/videoConvert.db'
+DB_NAME = '/app/content/videoConvert.db'
 # '/Users/oomkaxena/Desktop/content/videoConvert.db'
 # '/app/content/videoConvert.db'
-VIDEO_DIRECTORY = '/Users/oomkaxena/Desktop/content/output'
+VIDEO_DIRECTORY = '/app/content/output'
 # '/Users/oomkaxena/Desktop/content/output'
 # '/app/content/output'
 
-# Pagination settings
-PER_PAGE = 3
+# Convert UTC timestamp to MST
+def convert_timestamp(timestamp):
+    utc_timestamp = datetime.datetime.utcfromtimestamp(timestamp)
+    utc_tz = pytz.timezone('UTC')
+    mountain_tz = pytz.timezone('US/Mountain')
+    mountain_timestamp = utc_tz.localize(utc_timestamp).astimezone(mountain_tz)
+    return mountain_timestamp.strftime('%m/%d/%Y %I:%M %p')
 
 @app.route('/')
 def index():
+    # Set the timezone to Mountain Time
+    mountain_tz = pytz.timezone('US/Mountain')
     # Fetch all records from the database
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute('SELECT id, original_file_name, converted_file_name, claim_number, ad_notes FROM converted_videos')
-    all_videos = c.fetchall()
-    conn.close()
-
-    # Pagination logic
-    page = request.args.get(get_page_parameter(), type=int) or 1
-    offset = (page - 1) * PER_PAGE
-    videos = all_videos[offset:offset+PER_PAGE]
-
-    pagination = Pagination(
-        page=page,
-        per_page=PER_PAGE,
-        total=len(all_videos),
-        css_framework='bootstrap5',
-        page_parameter='page'
+    c.execute('SELECT id, original_file_name, original_file_date, converted_file_name, converted_file_date, claim_number, ad_notes FROM converted_videos')
+    videos = c.fetchall()
+    
+    # Convert timestamps to MST
+    for i in range(len(videos)):
+        original_file_date = videos[i][2]
+        converted_file_date = videos[i][4]
+        videos[i] = (
+            videos[i][0],
+            videos[i][1],
+            convert_timestamp(original_file_date),
+            videos[i][3],
+            convert_timestamp(converted_file_date),
+            videos[i][5],
+            videos[i][6]
     )
 
-    # print(f"page={page}")
-    # print(f"offset={offset}")
-    # print(f"videos={videos}")
-    # print(f"pagination.page={pagination.page}")
-    # print(f"pagination.per_page={pagination.per_page}")
-    # print(f"pagination.total={pagination.total}")
+    conn.close()
 
-    total_pages = int(len(all_videos) / PER_PAGE) + (len(all_videos) % PER_PAGE != 0)
-    current_page_range = list(range((page - 1) * PER_PAGE + 1, min(page * PER_PAGE, len(all_videos)) + 1))
-
-    # print(f"total_pages={total_pages}")
-    # print(f"current_page_range={current_page_range}")
-
-    return render_template('index.html', videos=videos, pagination=pagination)
+    return render_template('index.html', videos=videos, datetime=datetime)
 
 @app.route('/update', methods=['POST'])
 def update():
