@@ -3,3 +3,4 @@ setuptools==67.3.3
 Flask-SQLAlchemy==3.0.3
 sqlalchemy
 flask_bootstrap
+flask_paginate

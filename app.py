@@ -1,13 +1,21 @@
 from flask import Flask, render_template, request, redirect, send_from_directory
 from flask_bootstrap import Bootstrap
+from flask_paginate import Pagination, get_page_parameter
 import sqlite3
 import os
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 
-DB_NAME = '/app/content/videoConvert.db'
-VIDEO_DIRECTORY = '/app/content/output'
+DB_NAME = '/Users/oomkaxena/Desktop/content/videoConvert.db'
+# '/Users/oomkaxena/Desktop/content/videoConvert.db'
+# '/app/content/videoConvert.db'
+VIDEO_DIRECTORY = '/Users/oomkaxena/Desktop/content/output'
+# '/Users/oomkaxena/Desktop/content/output'
+# '/app/content/output'
+
+# Pagination settings
+PER_PAGE = 3
 
 @app.route('/')
 def index():
@@ -15,9 +23,36 @@ def index():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('SELECT id, original_file_name, converted_file_name, claim_number, ad_notes FROM converted_videos')
-    videos = c.fetchall()
+    all_videos = c.fetchall()
     conn.close()
-    return render_template('index.html', videos=videos)
+
+    # Pagination logic
+    page = request.args.get(get_page_parameter(), type=int) or 1
+    offset = (page - 1) * PER_PAGE
+    videos = all_videos[offset:offset+PER_PAGE]
+
+    pagination = Pagination(
+        page=page,
+        per_page=PER_PAGE,
+        total=len(all_videos),
+        css_framework='bootstrap5',
+        page_parameter='page'
+    )
+
+    # print(f"page={page}")
+    # print(f"offset={offset}")
+    # print(f"videos={videos}")
+    # print(f"pagination.page={pagination.page}")
+    # print(f"pagination.per_page={pagination.per_page}")
+    # print(f"pagination.total={pagination.total}")
+
+    total_pages = int(len(all_videos) / PER_PAGE) + (len(all_videos) % PER_PAGE != 0)
+    current_page_range = list(range((page - 1) * PER_PAGE + 1, min(page * PER_PAGE, len(all_videos)) + 1))
+
+    # print(f"total_pages={total_pages}")
+    # print(f"current_page_range={current_page_range}")
+
+    return render_template('index.html', videos=videos, pagination=pagination)
 
 @app.route('/update', methods=['POST'])
 def update():
