@@ -96,6 +96,7 @@ def home():
     return render_template('home.html', videos=videos, datetime=datetime)
 
 @app.route('/update', methods=['POST'])
+@login_required
 def update():
     # Update record in the database
     conn = sqlite3.connect(os.environ.get('DB_NAME'))
@@ -109,10 +110,12 @@ def update():
     return redirect('/')
 
 @app.route('/play_video')
+@login_required
 def play_video():
     return render_template('play_video.html')
 
 @app.route('/video/<path:filename>')
+@login_required
 def video(filename):
     """Route to serve video files."""
     # Check if the requested file exists in the video directory
@@ -122,6 +125,7 @@ def video(filename):
         return "Video not found", 404
 
 @app.route('/play/<path:filename>')
+@login_required
 def play(filename):
     """Route to play video files in a separate template page."""
     # Check if the requested file exists in the video directory

@@ -61,7 +61,8 @@
     $(document).ready(function() {
         $('#videos').DataTable({
             columnDefs: [
-                { type: 'string', targets: 4 } // specify the data type of the third column (Claim Number)
+                { type: 'string', targets: 4 }, // specify the data type of the third column (Claim Number)
+                { type: 'date', targets: 3 }// specify the data type of the date column
             ],
             "aaSorting": [[ 3, "desc" ]] // Sort by Converted File Date column descending
         });

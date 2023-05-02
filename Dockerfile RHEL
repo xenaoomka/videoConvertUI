@@ -1,0 +1,37 @@
+FROM registry.access.redhat.com/ubi8/ubi:latest
+
+# Create a new user and group to run the application as
+RUN groupadd -r flaskgroup && useradd -r -g flaskgroup flaskuser
+
+# Install system dependencies
+RUN dnf -y upgrade --refresh && \
+    dnf -y install python3 python3-pip && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
+
+# Set up app directory
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+RUN chown -R flaskuser:flaskgroup /app
+
+
+# Install the required packages
+# Upgrade pip and install dependencies
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r requirements.RHEL.txt
+
+# Switch to the non-root user
+USER flaskuser
+
+# Set environment variable
+ENV FLASK_APP=app.py
+
+# Expose the default Flask port
+EXPOSE 5000
+
+# Run the Flask application
+CMD ["flask", "run", "--host=0.0.0.0"]
+
+

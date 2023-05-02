@@ -1,0 +1,11 @@
+Flask==2.0.2
+Flask-Security==3.0.0
+Flask-Security-Too==4.1.6
+Flask-SQLAlchemy==2.5.1
+Jinja2==3.0.2
+pytz==2022.7.1
+SQLAlchemy==1.4.40
+Werkzeug==2.0.3
+python-dotenv==0.19.2
+Flask-WTF==1.0.1
+Flask-Bcrypt
